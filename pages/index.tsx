@@ -171,7 +171,16 @@ export default function Home() {
 
     return (
         <div className={styles.container}>
-            <h1>BVB Stock Data</h1>
+            <div className={styles.header}>
+                <h1>BET Index Stock Data</h1>
+                <a href="https://www.buymeacoffee.com/razvanbielz" target="_blank" rel="noopener noreferrer">
+                    <img 
+                        src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
+                        alt="Buy Me A Coffee" 
+                        style={{ height: '60px', width: '217px' }}
+                    />
+                </a>
+            </div>
             <div className={styles.lastUpdate}>{lastUpdate && `Last updated: ${lastUpdate}`}</div>
             
             {loading && <div className={styles.loading}>Loading data...</div>}

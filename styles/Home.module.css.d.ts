@@ -1,5 +1,6 @@
 declare const styles: {
     container: string;
+    header: string;
     tableContainer: string;
     stockTable: string;
     error: string;

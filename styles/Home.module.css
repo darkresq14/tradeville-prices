@@ -5,6 +5,13 @@
     padding: 1rem;
 }
 
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 .tableContainer {
     overflow-x: auto;
 }
