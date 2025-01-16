@@ -2,15 +2,13 @@
 
 A Next.js application that displays real-time stock prices from the Bucharest Stock Exchange (BVB) using the Tradeville API.
 
-Data provided by [TradeVille API](https://api.tradeville.ro).
-
 ## Features
 
-- Real-time stock prices display for multiple symbols
-- REST API endpoint for individual symbol prices
-- BET Index composition weights
-- Automatic data refresh every 5 minutes
-- Responsive table design
+- Real-time stock data from BET index with automatic 5-minute refresh
+- Sortable table columns for all data fields
+- BET index composition weights
+- Simple REST API endpoints for integration
+- Mobile-friendly responsive design
 
 ## Getting Started
 
@@ -24,52 +22,53 @@ npm install
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser to see the main page.
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## API Usage
+## API Endpoints
 
-### Get Symbol Price
-
-To get the price for a specific symbol, make a GET request to:
+### Stock Price Endpoint
 ```
-GET /api/[symbol]
+GET https://tradeville-prices.vercel.app/api/[symbol]
 ```
 
-Example:
-```bash
-curl http://localhost:3000/api/SNP
-```
+Returns the current price for a given stock symbol. Perfect for Excel or Google Sheets integration.
 
-Success Response:
+Example response:
 ```
 0.5230
 ```
 
-Error Response:
+### BET Index Weights Endpoint
 ```
-Symbol not found
-```
-
-### Get BET Index Weights
-
-To get the current composition weights of the BET index, make a GET request to:
-```
-GET /api/weights
+GET https://tradeville-prices.vercel.app/api/weights
 ```
 
-Example Response:
+Returns the current weights of all stocks in the BET index. Each line contains a symbol and its weight in decimal format (e.g., 19.44% is represented as 0.19440000).
+
+Example response:
 ```
 TLV, 0.19440000
 SNP, 0.19370000
-H2O, 0.16110000
-SNG, 0.08980000
 BRD, 0.07430000
 ```
 
-Each line contains a symbol and its weight in decimal format (e.g., 19.44% is represented as 0.19440000).
+## Google Sheets Integration
+
+Use these formulas to import data directly:
+
+```
+# For stock price:
+=IMPORTDATA("https://tradeville-prices.vercel.app/api/SNP")
+
+# For index weights:
+=IMPORTDATA("https://tradeville-prices.vercel.app/api/weights")
+```
 
 ## Available Symbols
 
-The following symbols represent all companies in the BET index (Bucharest Exchange Trading Index) as of January 16, 2025:
+The following symbols represent companies in the BET index (Bucharest Exchange Trading Index):
 
-SNP, TLV, H2O, SNG, BRD, DIGI, SNN, EL, TGN, M, TEL, ONE, FP, ATB, PE, AQ, TRP, SFG, TTS, WINE 
+SNP, TLV, H2O, SNG, BRD, DIGI, SNN, EL, TGN, M, TEL, ONE, FP, ATB, PE, AQ, TRP, SFG, TTS, WINE
+
+---
+Data provided by [TradeVille API](https://api.tradeville.ro) 

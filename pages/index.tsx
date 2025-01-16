@@ -379,8 +379,10 @@ export default function Home() {
             <div className={styles.apiInfo}>
                 <h2>API Integration</h2>
                 <p>
-                    Want to integrate these stock prices into your spreadsheet? Use our simple API endpoint:
+                    Want to integrate BET index data into your spreadsheet? Use our simple API endpoints:
                 </p>
+                
+                <h3>Stock Price Endpoint:</h3>
                 <pre className={styles.code}>
                     GET https://tradeville-prices.vercel.app/api/[symbol]
                 </pre>
@@ -392,9 +394,23 @@ export default function Home() {
                 <pre className={styles.code}>
                     0.5230
                 </pre>
-                <h3>Google Sheets Formula:</h3>
+
+                <h3>BET Index Weights Endpoint:</h3>
                 <pre className={styles.code}>
-                    =IMPORTDATA("https://tradeville-prices.vercel.app/api/SNP")
+                    GET https://tradeville-prices.vercel.app/api/weights
+                </pre>
+                <p>
+                    Returns the current weights of all stocks in the BET index, one per line.
+                    Each line contains the symbol and weight (as a decimal) separated by a comma and space.
+                </p>
+                <h3>Example Response:</h3>
+                <pre className={styles.code}>{`SNP, 0.33000000
+TLV, 0.19800000
+BRD, 0.17200000`}</pre>
+
+                <h3>Google Sheets Formulas:</h3>
+                <pre className={styles.code}>
+                    {"// For stock price:\n"}=IMPORTDATA("https://tradeville-prices.vercel.app/api/SNP"){"\n\n"}{"// For index weights:\n"}=IMPORTDATA("https://tradeville-prices.vercel.app/api/weights")
                 </pre>
                 <p className={styles.attribution}>
                     Data provided by <a href="https://api.tradeville.ro" target="_blank" rel="noopener noreferrer">TradeVille API</a>
