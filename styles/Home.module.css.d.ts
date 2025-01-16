@@ -1,6 +1,8 @@
 declare const styles: {
     container: string;
     header: string;
+    headerLinks: string;
+    githubLink: string;
     tableContainer: string;
     stockTable: string;
     error: string;
@@ -10,6 +12,7 @@ declare const styles: {
     negative: string;
     apiInfo: string;
     code: string;
+    attribution: string;
 };
 
 export default styles; 

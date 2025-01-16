@@ -2,6 +2,8 @@
 
 A Next.js application that displays real-time stock prices from the Bucharest Stock Exchange (BVB) using the Tradeville API.
 
+Data provided by [TradeVille API](https://api.tradeville.ro).
+
 ## Features
 
 - Real-time stock prices display for multiple symbols

@@ -173,13 +173,22 @@ export default function Home() {
         <div className={styles.container}>
             <div className={styles.header}>
                 <h1>BET Index Stock Data</h1>
-                <a href="https://www.buymeacoffee.com/razvanbielz" target="_blank" rel="noopener noreferrer">
-                    <img 
-                        src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
-                        alt="Buy Me A Coffee" 
-                        style={{ height: '60px', width: '217px' }}
-                    />
-                </a>
+                <div className={styles.headerLinks}>
+                    <a href="https://github.com/darkresq14/tradeville-prices" target="_blank" rel="noopener noreferrer" className={styles.githubLink}>
+                        <img 
+                            src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" 
+                            alt="GitHub" 
+                            style={{ height: '40px', width: '40px', marginRight: '1rem' }}
+                        />
+                    </a>
+                    <a href="https://www.buymeacoffee.com/razvanbielz" target="_blank" rel="noopener noreferrer">
+                        <img 
+                            src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
+                            alt="Buy Me A Coffee" 
+                            style={{ height: '60px', width: '217px' }}
+                        />
+                    </a>
+                </div>
             </div>
             <div className={styles.lastUpdate}>{lastUpdate && `Last updated: ${lastUpdate}`}</div>
             
@@ -244,6 +253,9 @@ export default function Home() {
                 <pre className={styles.code}>
                     =IMPORTDATA("https://tradeville-prices.vercel.app/api/SNP")
                 </pre>
+                <p className={styles.attribution}>
+                    Data provided by <a href="https://api.tradeville.ro" target="_blank" rel="noopener noreferrer">TradeVille API</a>
+                </p>
             </div>
         </div>
     );
