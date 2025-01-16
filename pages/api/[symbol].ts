@@ -1,16 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import WebSocket from 'ws';
+import { API_CREDENTIALS } from '../../config/credentials';
 
 const MAX_RETRIES = 10;
 const RETRY_DELAY_MS = 1000;
 const REQUEST_TIMEOUT_MS = 10000;
 const WEBSOCKET_URL = 'wss://api.tradeville.ro:443';
 const WEBSOCKET_PROTOCOLS = ['apitv'];
-const DEMO_CREDENTIALS = {
-    coduser: '!DemoAPITDV',
-    parola: 'DemoAPITDV',
-    demo: true
-} as const;
 
 interface WebSocketMessage {
     cmd: string;
@@ -19,7 +15,11 @@ interface WebSocketMessage {
 
 interface LoginMessage extends WebSocketMessage {
     cmd: 'login';
-    prm: typeof DEMO_CREDENTIALS;
+    prm: {
+        coduser: string;
+        parola: string;
+        demo: boolean;
+    };
 }
 
 interface SymbolMessage extends WebSocketMessage {
@@ -139,7 +139,11 @@ async function connectWithRetry(
                 try {
                     const loginMessage: LoginMessage = {
                         cmd: 'login',
-                        prm: DEMO_CREDENTIALS
+                        prm: {
+                            coduser: API_CREDENTIALS.coduser,
+                            parola: API_CREDENTIALS.parola,
+                            demo: API_CREDENTIALS.demo
+                        }
                     };
                     ws.send(createWebSocketMessage(loginMessage));
                 } catch (error) {

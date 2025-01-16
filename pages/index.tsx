@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import styles from '../styles/Home.module.css';
 import { ApiResponse, ApiSymbolData, StockData } from '../types/api';
-import { SYMBOLS, API_CREDENTIALS } from '../constants/symbols';
+import { SYMBOLS } from '../constants/symbols';
+import { API_CREDENTIALS } from '../config/credentials';
 
 export default function Home() {
     const [stockData, setStockData] = useState<Record<string, StockData>>({});
@@ -102,9 +103,9 @@ export default function Home() {
             send({
                 cmd: 'login',
                 prm: { 
-                    coduser: API_CREDENTIALS.username, 
-                    parola: API_CREDENTIALS.password, 
-                    demo: true 
+                    coduser: API_CREDENTIALS.coduser, 
+                    parola: API_CREDENTIALS.parola, 
+                    demo: API_CREDENTIALS.demo 
                 }
             });
         };
