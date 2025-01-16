@@ -3,6 +3,32 @@ import WebSocket from 'ws';
 
 const MAX_RETRIES = 10;
 const RETRY_DELAY_MS = 1000;
+const REQUEST_TIMEOUT_MS = 10000;
+const WEBSOCKET_URL = 'wss://api.tradeville.ro:443';
+const WEBSOCKET_PROTOCOLS = ['apitv'];
+const DEMO_CREDENTIALS = {
+    coduser: '!DemoAPITDV',
+    parola: 'DemoAPITDV',
+    demo: true
+} as const;
+
+interface WebSocketMessage {
+    cmd: string;
+    prm?: Record<string, unknown>;
+}
+
+interface LoginMessage extends WebSocketMessage {
+    cmd: 'login';
+    prm: typeof DEMO_CREDENTIALS;
+}
+
+interface SymbolMessage extends WebSocketMessage {
+    cmd: 'Symbol';
+    prm: {
+        symbol: string;
+        market: 'REGS';
+    };
+}
 
 interface ApiResponse {
     cmd: string;
@@ -12,9 +38,23 @@ interface ApiResponse {
         Price?: number[];
         LastPrice?: number[];
     };
+    error?: string;
 }
 
 type Response = number | string;
+
+const isValidSymbol = (symbol: string): boolean => {
+    return /^[A-Z0-9]{1,10}$/i.test(symbol);
+};
+
+const createWebSocketMessage = (message: LoginMessage | SymbolMessage): string => {
+    try {
+        return JSON.stringify(message);
+    } catch (error) {
+        console.error('Failed to stringify message:', error);
+        throw new Error('Failed to create WebSocket message');
+    }
+};
 
 async function connectWithRetry(
     symbol: string,
@@ -22,109 +62,139 @@ async function connectWithRetry(
     retryCount = 0
 ): Promise<void> {
     let ws: WebSocket | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
+    let isCleanedUp = false;
     
     const cleanup = () => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.close();
-            console.log('WebSocket connection closed');
+        if (isCleanedUp) return;
+        isCleanedUp = true;
+
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+        if (ws) {
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
+            ws.removeAllListeners();
+            ws = null;
+            console.log('WebSocket connection cleaned up');
         }
     };
 
+    const scheduleRetry = (error: string) => {
+        cleanup();
+        if (retryCount < MAX_RETRIES - 1) {
+            setTimeout(() => {
+                connectWithRetry(symbol, res, retryCount + 1).then(resolve);
+            }, RETRY_DELAY_MS);
+        } else {
+            res.status(500).json(error);
+            resolve();
+        }
+    };
+
+    let resolve: () => void;
     try {
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((_resolve) => {
+            resolve = _resolve;
             try {
-                ws = new WebSocket('wss://api.tradeville.ro:443', ["apitv"]);
+                ws = new WebSocket(WEBSOCKET_URL, WEBSOCKET_PROTOCOLS);
             } catch (error) {
                 console.error(`Failed to create WebSocket (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
-                if (retryCount < MAX_RETRIES - 1) {
-                    setTimeout(() => {
-                        connectWithRetry(symbol, res, retryCount + 1).then(resolve);
-                    }, RETRY_DELAY_MS);
-                    return;
-                }
-                res.status(500).json('Failed to connect to data source after multiple attempts');
-                resolve();
+                scheduleRetry('Failed to connect to data source after multiple attempts');
                 return;
             }
 
             if (!ws) {
-                if (retryCount < MAX_RETRIES - 1) {
-                    setTimeout(() => {
-                        connectWithRetry(symbol, res, retryCount + 1).then(resolve);
-                    }, RETRY_DELAY_MS);
-                    return;
-                }
-                res.status(500).json('Failed to create WebSocket connection after multiple attempts');
-                resolve();
+                scheduleRetry('Failed to create WebSocket connection after multiple attempts');
                 return;
             }
 
-            ws.onopen = () => {
-                if (!ws) return;
-                ws.send(JSON.stringify({
-                    cmd: 'login',
-                    prm: { 
-                        coduser: '!DemoAPITDV',
-                        parola: 'DemoAPITDV',
-                        demo: true 
+            // Set timeout first to ensure no hanging connections
+            timeoutId = setTimeout(() => {
+                if (!res.headersSent) {
+                    if (retryCount < MAX_RETRIES - 1) {
+                        scheduleRetry('Request timeout');
+                    } else {
+                        cleanup();
+                        res.status(504).json('Request timeout after multiple attempts');
+                        resolve();
                     }
-                }));
+                } else {
+                    cleanup();
+                }
+            }, REQUEST_TIMEOUT_MS);
+
+            ws.onopen = () => {
+                if (!ws) {
+                    cleanup();
+                    resolve();
+                    return;
+                }
+                try {
+                    const loginMessage: LoginMessage = {
+                        cmd: 'login',
+                        prm: DEMO_CREDENTIALS
+                    };
+                    ws.send(createWebSocketMessage(loginMessage));
+                } catch (error) {
+                    console.error('Failed to send login message:', error);
+                    scheduleRetry('Failed to authenticate with data source');
+                }
             };
 
             ws.onmessage = (event) => {
-                if (!ws) return;
-                const response = JSON.parse(event.data.toString()) as ApiResponse;
+                if (!ws) {
+                    cleanup();
+                    resolve();
+                    return;
+                }
+
+                let response: ApiResponse;
+                try {
+                    response = JSON.parse(event.data.toString()) as ApiResponse;
+                } catch (error) {
+                    console.error('Failed to parse WebSocket message:', error);
+                    scheduleRetry('Invalid response from data source');
+                    return;
+                }
                 
                 if (response.cmd === 'login' && response.OK) {
-                    ws.send(JSON.stringify({
-                        cmd: 'Symbol',
-                        prm: {
-                            symbol: symbol.toUpperCase(),
-                            market: 'REGS'
-                        }
-                    }));
+                    try {
+                        const symbolMessage: SymbolMessage = {
+                            cmd: 'Symbol',
+                            prm: {
+                                symbol: symbol.toUpperCase(),
+                                market: 'REGS'
+                            }
+                        };
+                        ws.send(createWebSocketMessage(symbolMessage));
+                    } catch (error) {
+                        console.error('Failed to send symbol message:', error);
+                        scheduleRetry('Failed to request symbol data');
+                    }
                 } else if (response.cmd === 'Symbol') {
-                    if (response.data) {
-                        const price = (response.data.Price?.[0] || response.data.LastPrice?.[0] || 0);
+                    if (response.data?.Symbol?.length) {
+                        const price = response.data.Price?.[0] ?? response.data.LastPrice?.[0] ?? 0;
+                        cleanup();
                         res.status(200).json(price);
                     } else {
+                        cleanup();
                         res.status(404).json('Symbol not found');
                     }
-                    cleanup();
                     resolve();
                 }
             };
 
             ws.onerror = (error) => {
                 console.error(`WebSocket error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
-                cleanup();
-                if (retryCount < MAX_RETRIES - 1) {
-                    setTimeout(() => {
-                        connectWithRetry(symbol, res, retryCount + 1).then(resolve);
-                    }, RETRY_DELAY_MS);
-                } else {
-                    res.status(500).json('Failed to connect to data source after multiple attempts');
-                    resolve();
-                }
+                scheduleRetry('Failed to connect to data source after multiple attempts');
             };
 
-            const timeoutId = setTimeout(() => {
-                cleanup();
-                if (!res.headersSent) {
-                    if (retryCount < MAX_RETRIES - 1) {
-                        setTimeout(() => {
-                            connectWithRetry(symbol, res, retryCount + 1).then(resolve);
-                        }, RETRY_DELAY_MS);
-                    } else {
-                        res.status(504).json('Request timeout after multiple attempts');
-                        resolve();
-                    }
-                }
-            }, 10000);
-
             ws.onclose = () => {
-                clearTimeout(timeoutId);
-                console.log('WebSocket connection closed');
+                cleanup();
             };
         });
     } catch (error) {
@@ -151,6 +221,10 @@ export default async function handler(
 
     if (typeof symbol !== 'string') {
         return res.status(400).json('Invalid symbol parameter');
+    }
+
+    if (!isValidSymbol(symbol)) {
+        return res.status(400).json('Invalid symbol format');
     }
 
     await connectWithRetry(symbol, res);
