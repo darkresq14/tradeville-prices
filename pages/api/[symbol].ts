@@ -83,14 +83,16 @@ async function connectWithRetry(
         }
     };
 
-    const scheduleRetry = (error: string) => {
+    const scheduleRetry = () => {
         cleanup();
         if (retryCount < MAX_RETRIES - 1) {
+            console.log(`Retrying attempt ${retryCount + 1}/${MAX_RETRIES} for symbol ${symbol}`);
             setTimeout(() => {
                 connectWithRetry(symbol, res, retryCount + 1).then(resolve);
             }, RETRY_DELAY_MS);
         } else {
-            res.status(500).json(error);
+            console.error(`All retries exhausted for symbol ${symbol}`);
+            res.status(500).json('Failed to fetch data after multiple attempts');
             resolve();
         }
     };
@@ -103,12 +105,12 @@ async function connectWithRetry(
                 ws = new WebSocket(WEBSOCKET_URL, WEBSOCKET_PROTOCOLS);
             } catch (error) {
                 console.error(`Failed to create WebSocket (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
-                scheduleRetry('Failed to connect to data source after multiple attempts');
+                scheduleRetry();
                 return;
             }
 
             if (!ws) {
-                scheduleRetry('Failed to create WebSocket connection after multiple attempts');
+                scheduleRetry();
                 return;
             }
 
@@ -116,7 +118,8 @@ async function connectWithRetry(
             timeoutId = setTimeout(() => {
                 if (!res.headersSent) {
                     if (retryCount < MAX_RETRIES - 1) {
-                        scheduleRetry('Request timeout');
+                        console.log(`Timeout on attempt ${retryCount + 1}/${MAX_RETRIES} for symbol ${symbol}`);
+                        scheduleRetry();
                     } else {
                         cleanup();
                         res.status(504).json('Request timeout after multiple attempts');
@@ -141,7 +144,7 @@ async function connectWithRetry(
                     ws.send(createWebSocketMessage(loginMessage));
                 } catch (error) {
                     console.error('Failed to send login message:', error);
-                    scheduleRetry('Failed to authenticate with data source');
+                    scheduleRetry();
                 }
             };
 
@@ -157,7 +160,7 @@ async function connectWithRetry(
                     response = JSON.parse(event.data.toString()) as ApiResponse;
                 } catch (error) {
                     console.error('Failed to parse WebSocket message:', error);
-                    scheduleRetry('Invalid response from data source');
+                    scheduleRetry();
                     return;
                 }
                 
@@ -173,7 +176,7 @@ async function connectWithRetry(
                         ws.send(createWebSocketMessage(symbolMessage));
                     } catch (error) {
                         console.error('Failed to send symbol message:', error);
-                        scheduleRetry('Failed to request symbol data');
+                        scheduleRetry();
                     }
                 } else if (response.cmd === 'Symbol') {
                     if (response.data?.Symbol?.length) {
@@ -182,7 +185,13 @@ async function connectWithRetry(
                         res.status(200).json(price);
                     } else {
                         cleanup();
-                        res.status(404).json('Symbol not found');
+                        // Only send not found after all retries
+                        if (retryCount === MAX_RETRIES - 1) {
+                            res.status(404).json('Symbol not found');
+                        } else {
+                            scheduleRetry();
+                            return;
+                        }
                     }
                     resolve();
                 }
@@ -190,7 +199,7 @@ async function connectWithRetry(
 
             ws.onerror = (error) => {
                 console.error(`WebSocket error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
-                scheduleRetry('Failed to connect to data source after multiple attempts');
+                scheduleRetry();
             };
 
             ws.onclose = () => {
