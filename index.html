@@ -135,17 +135,28 @@
 
         function handleMessage(event) {
             const response = JSON.parse(event.data);
+            console.log('Received data:', response);
             
             if (response.cmd === 'login' && response.OK) {
                 requestSymbolData();
             } else if (response.cmd === 'Symbol') {
-                updateTableWithSymbol(response.data);
+                if (response.data) {
+                    updateTableWithSymbol(response.data);
+                } else {
+                    console.error('No data in response:', response);
+                }
             }
         }
 
         function requestSymbolData() {
             SYMBOLS.forEach(symbol => {
-                send({ cmd: 'Symbol', prm: { symbol: symbol } });
+                send({ 
+                    cmd: 'Symbol', 
+                    prm: { 
+                        symbol: symbol,
+                        market: 'REGS'
+                    } 
+                });
             });
         }
 
@@ -153,18 +164,32 @@
             const tbody = document.querySelector('#stockTable tbody');
             const row = document.createElement('tr');
             
+            const price = data.Price ? parseFloat(data.Price) : data.LastPrice ? parseFloat(data.LastPrice) : 0;
+            const change = data.VarPrc ? parseFloat(data.VarPrc) : data.PercentageChange ? parseFloat(data.PercentageChange) : 0;
+            const volume = data.Volume || data.TotalVolume || 0;
+            const open = data.Open ? parseFloat(data.Open) : data.OpenPrice ? parseFloat(data.OpenPrice) : price;
+            const high = data.High ? parseFloat(data.High) : data.HighPrice ? parseFloat(data.HighPrice) : price;
+            const low = data.Low ? parseFloat(data.Low) : data.LowPrice ? parseFloat(data.LowPrice) : price;
+            const close = data.Close ? parseFloat(data.Close) : data.ClosePrice ? parseFloat(data.ClosePrice) : price;
+
             row.innerHTML = `
-                <td>${data.Symbol}</td>
-                <td>${parseFloat(data.Price).toFixed(2)}</td>
-                <td>${parseFloat(data.VarPrc).toFixed(2)}%</td>
-                <td>${data.Volume}</td>
-                <td>${parseFloat(data.Open).toFixed(2)}</td>
-                <td>${parseFloat(data.High).toFixed(2)}</td>
-                <td>${parseFloat(data.Low).toFixed(2)}</td>
-                <td>${parseFloat(data.Close).toFixed(2)}</td>
+                <td>${data.Symbol || ''}</td>
+                <td>${isNaN(price) ? '0.00' : price.toFixed(2)}</td>
+                <td>${isNaN(change) ? '0.00' : change.toFixed(2)}%</td>
+                <td>${volume}</td>
+                <td>${isNaN(open) ? '0.00' : open.toFixed(2)}</td>
+                <td>${isNaN(high) ? '0.00' : high.toFixed(2)}</td>
+                <td>${isNaN(low) ? '0.00' : low.toFixed(2)}</td>
+                <td>${isNaN(close) ? '0.00' : close.toFixed(2)}</td>
             `;
             
-            tbody.appendChild(row);
+            const existingRow = Array.from(tbody.rows).find(r => r.cells[0].textContent === data.Symbol);
+            if (existingRow) {
+                tbody.replaceChild(row, existingRow);
+            } else {
+                tbody.appendChild(row);
+            }
+            
             document.getElementById('loading').style.display = 'none';
             updateTimestamp();
         }
