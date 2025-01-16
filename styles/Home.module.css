@@ -63,4 +63,35 @@
 .negative {
     color: #dc3545;
     font-weight: 500;
+}
+
+.apiInfo {
+    margin-top: 3rem;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.apiInfo h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.apiInfo h3 {
+    margin-top: 1.5rem;
+    color: #444;
+}
+
+.apiInfo p {
+    color: #666;
+    line-height: 1.5;
+}
+
+.code {
+    background-color: #eee;
+    padding: 1rem;
+    border-radius: 4px;
+    font-family: monospace;
+    overflow-x: auto;
+    margin: 1rem 0;
 } 

@@ -223,6 +223,28 @@ export default function Home() {
                     </tbody>
                 </table>
             </div>
+
+            <div className={styles.apiInfo}>
+                <h2>API Integration</h2>
+                <p>
+                    Want to integrate these stock prices into your spreadsheet? Use our simple API endpoint:
+                </p>
+                <pre className={styles.code}>
+                    GET https://tradeville-prices.vercel.app/api/[symbol]
+                </pre>
+                <p>
+                    Replace [symbol] with any stock symbol from the table above (e.g., SNP, TLV, etc.).
+                    The API returns just the price number, making it perfect for Excel or Google Sheets integration.
+                </p>
+                <h3>Example Response:</h3>
+                <pre className={styles.code}>
+                    0.5230
+                </pre>
+                <h3>Google Sheets Formula:</h3>
+                <pre className={styles.code}>
+                    =IMPORTDATA("https://tradeville-prices.vercel.app/api/SNP")
+                </pre>
+            </div>
         </div>
     );
 } 

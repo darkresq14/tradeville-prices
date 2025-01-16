@@ -8,6 +8,8 @@ declare const styles: {
     lastUpdate: string;
     positive: string;
     negative: string;
+    apiInfo: string;
+    code: string;
 };
 
 export default styles; 
