@@ -10,6 +10,32 @@ export default function Home() {
     const [error, setError] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
     const [lastUpdate, setLastUpdate] = useState<string>('');
+    const [weights, setWeights] = useState<Record<string, number>>({});
+
+    // Fetch weights from our API
+    useEffect(() => {
+        const fetchWeights = async () => {
+            try {
+                const response = await fetch('/api/weights');
+                const text = await response.text();
+                const weightMap: Record<string, number> = {};
+                
+                // Parse the text response into a map
+                text.split('\n').forEach(line => {
+                    const [symbol, weightStr] = line.split(', ');
+                    if (symbol && weightStr) {
+                        weightMap[symbol] = parseFloat(weightStr) * 100; // Convert back to percentage
+                    }
+                });
+                
+                setWeights(weightMap);
+            } catch (error) {
+                console.error('Failed to fetch weights:', error);
+            }
+        };
+
+        fetchWeights();
+    }, []);
 
     useEffect(() => {
         let socket: WebSocket | null = null;
@@ -124,11 +150,12 @@ export default function Home() {
             const refPrice = data.RefPrice?.[0] ?? 0;
             const currentPrice = data.Price?.[0] ?? 0;
             const priceChange = refPrice > 0 ? ((currentPrice - refPrice) / refPrice) * 100 : 0;
+            const symbol = data.Symbol[0];
             
             setStockData(prev => ({
                 ...prev,
-                [data.Symbol[0]]: {
-                    symbol: data.Symbol[0],
+                [symbol]: {
+                    symbol: symbol,
                     name: data.Name?.[0] ?? '',
                     price: currentPrice,
                     change: priceChange,
@@ -141,7 +168,8 @@ export default function Home() {
                     ask: data.Ask?.[0] ?? 0,
                     dayMin: data.DayMin?.[0] ?? currentPrice,
                     dayMax: data.DayMax?.[0] ?? currentPrice,
-                    currency: data.Ccy?.[0] ?? 'RON'
+                    currency: data.Ccy?.[0] ?? 'RON',
+                    weight: weights[symbol] ?? 0
                 }
             }));
             setLoading(false);
@@ -156,7 +184,7 @@ export default function Home() {
                 socket.close();
             }
         };
-    }, []);
+    }, [weights]);
 
     // Refresh data every 5 minutes
     useEffect(() => {
@@ -208,10 +236,15 @@ export default function Home() {
                             <th>Volume</th>
                             <th>Day Min</th>
                             <th>Day Max</th>
+                            <th>Weight %</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {SYMBOLS.map(symbol => {
+                        {[...SYMBOLS].sort((a, b) => {
+                            const weightA = weights[a] || 0;
+                            const weightB = weights[b] || 0;
+                            return weightB - weightA;
+                        }).map(symbol => {
                             const data = stockData[symbol] || {};
                             return (
                                 <tr key={symbol}>
@@ -235,6 +268,7 @@ export default function Home() {
                                     <td>{data.volume || 0}</td>
                                     <td>{typeof data.dayMin === 'number' ? data.dayMin.toFixed(2) : '0.00'}</td>
                                     <td>{typeof data.dayMax === 'number' ? data.dayMax.toFixed(2) : '0.00'}</td>
+                                    <td>{weights[symbol]?.toFixed(2) || '0.00'}%</td>
                                 </tr>
                             );
                         })}

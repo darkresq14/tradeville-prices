@@ -35,6 +35,7 @@ export interface ApiSymbolData {
     EarnDate: Record<string, never>[];
     SharesNr: number[];
     StatusM: string[];
+    Weight: number[];
 }
 
 export interface ApiResponse {
@@ -58,4 +59,5 @@ export interface StockData {
     dayMin: number;
     dayMax: number;
     currency: string;
+    weight: number;
 } 
