@@ -11,6 +11,7 @@ export default function Home() {
     const [loading, setLoading] = useState<boolean>(true);
     const [lastUpdate, setLastUpdate] = useState<string>('');
     const [weights, setWeights] = useState<Record<string, number>>({});
+    const [apiSymbols, setApiSymbols] = useState<string[]>([]);
     const [sortConfig, setSortConfig] = useState<{
         key: string;
         direction: 'ascending' | 'descending';
@@ -26,18 +27,22 @@ export default function Home() {
                 const response = await fetch('/api/weights');
                 const text = await response.text();
                 const weightMap: Record<string, number> = {};
+                const symbols: string[] = [];
                 
                 // Parse the text response into a map
                 text.split('\n').forEach(line => {
                     const [symbol, weightStr] = line.split(', ');
                     if (symbol && weightStr) {
                         weightMap[symbol] = parseFloat(weightStr) * 100; // Convert back to percentage
+                        symbols.push(symbol);
                     }
                 });
                 
                 setWeights(weightMap);
+                setApiSymbols(symbols);
             } catch (error) {
                 console.error('Failed to fetch weights:', error);
+                setApiSymbols([...SYMBOLS]); // Convert readonly array to mutable array
             }
         };
 
@@ -213,7 +218,8 @@ export default function Home() {
     };
 
     const getSortedSymbols = () => {
-        return [...SYMBOLS].sort((a, b) => {
+        const symbolsToUse = apiSymbols.length > 0 ? apiSymbols : SYMBOLS;
+        return [...symbolsToUse].sort((a, b) => {
             const aData = stockData[a] || {};
             const bData = stockData[b] || {};
             
