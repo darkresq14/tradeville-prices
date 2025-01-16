@@ -11,6 +11,13 @@ export default function Home() {
     const [loading, setLoading] = useState<boolean>(true);
     const [lastUpdate, setLastUpdate] = useState<string>('');
     const [weights, setWeights] = useState<Record<string, number>>({});
+    const [sortConfig, setSortConfig] = useState<{
+        key: string;
+        direction: 'ascending' | 'descending';
+    }>({
+        key: 'weight',
+        direction: 'descending'
+    });
 
     // Fetch weights from our API
     useEffect(() => {
@@ -197,6 +204,77 @@ export default function Home() {
         return () => clearInterval(interval);
     }, []);
 
+    const sortData = (key: string) => {
+        let direction: 'ascending' | 'descending' = 'ascending';
+        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getSortedSymbols = () => {
+        return [...SYMBOLS].sort((a, b) => {
+            const aData = stockData[a] || {};
+            const bData = stockData[b] || {};
+            
+            let aValue: any;
+            let bValue: any;
+
+            switch (sortConfig.key) {
+                case 'symbol':
+                    aValue = a;
+                    bValue = b;
+                    break;
+                case 'name':
+                    aValue = aData.name || '';
+                    bValue = bData.name || '';
+                    break;
+                case 'price':
+                    aValue = aData.price || 0;
+                    bValue = bData.price || 0;
+                    break;
+                case 'change':
+                    aValue = aData.change || 0;
+                    bValue = bData.change || 0;
+                    break;
+                case 'bid':
+                    aValue = aData.bid || 0;
+                    bValue = bData.bid || 0;
+                    break;
+                case 'ask':
+                    aValue = aData.ask || 0;
+                    bValue = bData.ask || 0;
+                    break;
+                case 'volume':
+                    aValue = aData.volume || 0;
+                    bValue = bData.volume || 0;
+                    break;
+                case 'dayMin':
+                    aValue = aData.dayMin || 0;
+                    bValue = bData.dayMin || 0;
+                    break;
+                case 'dayMax':
+                    aValue = aData.dayMax || 0;
+                    bValue = bData.dayMax || 0;
+                    break;
+                case 'weight':
+                    aValue = weights[a] || 0;
+                    bValue = weights[b] || 0;
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (aValue < bValue) {
+                return sortConfig.direction === 'ascending' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'ascending' ? 1 : -1;
+            }
+            return 0;
+        });
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -227,24 +305,40 @@ export default function Home() {
                 <table className={styles.stockTable}>
                     <thead>
                         <tr>
-                            <th>Symbol</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Change %</th>
-                            <th>Bid</th>
-                            <th>Ask</th>
-                            <th>Volume</th>
-                            <th>Day Min</th>
-                            <th>Day Max</th>
-                            <th>Weight %</th>
+                            <th onClick={() => sortData('symbol')} className={styles.sortable}>
+                                Symbol {sortConfig.key === 'symbol' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('name')} className={styles.sortable}>
+                                Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('price')} className={styles.sortable}>
+                                Price {sortConfig.key === 'price' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('change')} className={styles.sortable}>
+                                Change % {sortConfig.key === 'change' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('bid')} className={styles.sortable}>
+                                Bid {sortConfig.key === 'bid' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('ask')} className={styles.sortable}>
+                                Ask {sortConfig.key === 'ask' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('volume')} className={styles.sortable}>
+                                Volume {sortConfig.key === 'volume' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('dayMin')} className={styles.sortable}>
+                                Day Min {sortConfig.key === 'dayMin' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('dayMax')} className={styles.sortable}>
+                                Day Max {sortConfig.key === 'dayMax' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => sortData('weight')} className={styles.sortable}>
+                                Weight % {sortConfig.key === 'weight' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        {[...SYMBOLS].sort((a, b) => {
-                            const weightA = weights[a] || 0;
-                            const weightB = weights[b] || 0;
-                            return weightB - weightA;
-                        }).map(symbol => {
+                        {getSortedSymbols().map(symbol => {
                             const data = stockData[symbol] || {};
                             return (
                                 <tr key={symbol}>

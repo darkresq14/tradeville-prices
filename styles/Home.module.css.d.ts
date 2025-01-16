@@ -14,6 +14,7 @@ declare const styles: {
     code: string;
     attribution: string;
     symbolLink: string;
+    sortable: string;
 };
 
 export default styles; 

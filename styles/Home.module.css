@@ -32,6 +32,14 @@
 
 .tableContainer {
     overflow-x: auto;
+    scrollbar-gutter: stable;
+}
+
+/* Hide scrollbar when not needed */
+@media screen and (min-width: 1200px) {
+    .tableContainer {
+        overflow-x: hidden;
+    }
 }
 
 .stockTable {
@@ -138,4 +146,21 @@
 
 .symbolLink:hover {
     text-decoration: underline;
+}
+
+.stockTable th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 1.5rem;
+}
+
+.stockTable th.sortable:hover {
+    background-color: #555;
+}
+
+.stockTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1ch;
 } 
