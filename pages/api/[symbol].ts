@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import WebSocket from 'ws';
 
+const MAX_RETRIES = 10;
+const RETRY_DELAY_MS = 1000;
+
 interface ApiResponse {
     cmd: string;
     OK?: boolean;
@@ -13,21 +16,13 @@ interface ApiResponse {
 
 type Response = number | string;
 
-export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse<Response>
-) {
-    const { symbol } = req.query;
-    
-    if (req.method !== 'GET') {
-        return res.status(405).json('Method not allowed');
-    }
-
-    if (typeof symbol !== 'string') {
-        return res.status(400).json('Invalid symbol parameter');
-    }
-
+async function connectWithRetry(
+    symbol: string,
+    res: NextApiResponse<Response>,
+    retryCount = 0
+): Promise<void> {
     let ws: WebSocket | null = null;
+    
     const cleanup = () => {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.close();
@@ -40,21 +35,30 @@ export default async function handler(
             try {
                 ws = new WebSocket('wss://api.tradeville.ro:443', ["apitv"]);
             } catch (error) {
-                console.error('Failed to create WebSocket:', error);
-                res.status(500).json('Failed to connect to data source');
+                console.error(`Failed to create WebSocket (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
+                if (retryCount < MAX_RETRIES - 1) {
+                    setTimeout(() => {
+                        connectWithRetry(symbol, res, retryCount + 1).then(resolve);
+                    }, RETRY_DELAY_MS);
+                    return;
+                }
+                res.status(500).json('Failed to connect to data source after multiple attempts');
                 resolve();
                 return;
             }
 
             if (!ws) {
-                res.status(500).json('Failed to create WebSocket connection');
+                if (retryCount < MAX_RETRIES - 1) {
+                    setTimeout(() => {
+                        connectWithRetry(symbol, res, retryCount + 1).then(resolve);
+                    }, RETRY_DELAY_MS);
+                    return;
+                }
+                res.status(500).json('Failed to create WebSocket connection after multiple attempts');
                 resolve();
                 return;
             }
-            
-            // Ensure cleanup on server-side errors
-            req.on('close', cleanup);
-            
+
             ws.onopen = () => {
                 if (!ws) return;
                 ws.send(JSON.stringify({
@@ -92,22 +96,32 @@ export default async function handler(
             };
 
             ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
+                console.error(`WebSocket error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
                 cleanup();
-                res.status(500).json('Failed to connect to data source');
-                resolve();
+                if (retryCount < MAX_RETRIES - 1) {
+                    setTimeout(() => {
+                        connectWithRetry(symbol, res, retryCount + 1).then(resolve);
+                    }, RETRY_DELAY_MS);
+                } else {
+                    res.status(500).json('Failed to connect to data source after multiple attempts');
+                    resolve();
+                }
             };
 
-            // Timeout after 10 seconds
             const timeoutId = setTimeout(() => {
                 cleanup();
                 if (!res.headersSent) {
-                    res.status(504).json('Request timeout');
+                    if (retryCount < MAX_RETRIES - 1) {
+                        setTimeout(() => {
+                            connectWithRetry(symbol, res, retryCount + 1).then(resolve);
+                        }, RETRY_DELAY_MS);
+                    } else {
+                        res.status(504).json('Request timeout after multiple attempts');
+                        resolve();
+                    }
                 }
-                resolve();
             }, 10000);
 
-            // Clear timeout if we get a response
             ws.onclose = () => {
                 clearTimeout(timeoutId);
                 console.log('WebSocket connection closed');
@@ -115,9 +129,29 @@ export default async function handler(
         });
     } catch (error) {
         cleanup();
-        console.error('Server error:', error);
+        console.error(`Server error (attempt ${retryCount + 1}/${MAX_RETRIES}):`, error);
         if (!res.headersSent) {
-            return res.status(500).json('Internal server error');
+            if (retryCount < MAX_RETRIES - 1) {
+                return connectWithRetry(symbol, res, retryCount + 1);
+            }
+            return res.status(500).json('Internal server error after multiple attempts');
         }
     }
+}
+
+export default async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse<Response>
+) {
+    const { symbol } = req.query;
+    
+    if (req.method !== 'GET') {
+        return res.status(405).json('Method not allowed');
+    }
+
+    if (typeof symbol !== 'string') {
+        return res.status(400).json('Invalid symbol parameter');
+    }
+
+    await connectWithRetry(symbol, res);
 } 
