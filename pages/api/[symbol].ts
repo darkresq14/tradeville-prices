@@ -5,21 +5,13 @@ interface ApiResponse {
     cmd: string;
     OK?: boolean;
     data?: {
-        Symbol: string;
-        Price?: number;
-        LastPrice?: number;
+        Symbol: string[];
+        Price?: number[];
+        LastPrice?: number[];
     };
 }
 
-interface SuccessResponse {
-    price: number;
-}
-
-interface ErrorResponse {
-    error: string;
-}
-
-type Response = SuccessResponse | ErrorResponse;
+type Response = number | { error: string };
 
 export default async function handler(
     req: NextApiRequest,
@@ -89,8 +81,8 @@ export default async function handler(
                     }));
                 } else if (response.cmd === 'Symbol') {
                     if (response.data) {
-                        const price = response.data.Price || response.data.LastPrice || 0;
-                        res.status(200).json({ price });
+                        const price = (response.data.Price?.[0] || response.data.LastPrice?.[0] || 0);
+                        res.status(200).json(price);
                     } else {
                         res.status(404).json({ error: 'Symbol not found' });
                     }
