@@ -1,0 +1,59 @@
+.container {
+    font-family: system-ui, -apple-system, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.tableContainer {
+    overflow-x: auto;
+}
+
+.stockTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1ch;
+}
+
+.stockTable th {
+    color: white;
+    background-color: #444;
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.stockTable td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.stockTable tr:nth-child(even) {
+    background-color: #EEE;
+}
+
+.error {
+    color: #dc3545;
+    padding: 1rem;
+    text-align: center;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+}
+
+.lastUpdate {
+    text-align: right;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.positive {
+    color: #198754;
+    font-weight: 500;
+}
+
+.negative {
+    color: #dc3545;
+    font-weight: 500;
+} 
