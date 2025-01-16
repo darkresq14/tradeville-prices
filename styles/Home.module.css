@@ -128,4 +128,14 @@
 
 .attribution a:hover {
     text-decoration: underline;
+}
+
+.symbolLink {
+    color: #0066cc;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.symbolLink:hover {
+    text-decoration: underline;
 } 

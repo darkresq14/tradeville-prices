@@ -215,7 +215,16 @@ export default function Home() {
                             const data = stockData[symbol] || {};
                             return (
                                 <tr key={symbol}>
-                                    <td>{symbol}</td>
+                                    <td>
+                                        <a 
+                                            href={`/api/${symbol}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className={styles.symbolLink}
+                                        >
+                                            {symbol}
+                                        </a>
+                                    </td>
                                     <td>{data.name || ''}</td>
                                     <td>{typeof data.price === 'number' ? `${data.price.toFixed(2)} ${data.currency || ''}` : '0.00'}</td>
                                     <td className={data.change > 0 ? styles.positive : data.change < 0 ? styles.negative : ''}>

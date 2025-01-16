@@ -13,6 +13,7 @@ declare const styles: {
     apiInfo: string;
     code: string;
     attribution: string;
+    symbolLink: string;
 };
 
 export default styles; 
