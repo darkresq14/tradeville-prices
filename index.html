@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BVB Stock Data</title>
+    <style>
+        :root {
+            --primary-text-color: #444;
+            --table-header-text-color: white;
+            --table-header-background-color: #444;
+            --table-alternate-row-background-color: #EEE;
+            --decoration-color: black;
+            --table-border-size: 1px;
+            --table-border-color: #444;
+            --table-margin: 1ch;
+            --table-cell-padding: 0.5rem;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--table-margin);
+        }
+
+        th {
+            color: var(--table-header-text-color);
+            background-color: var(--table-header-background-color);
+            padding: var(--table-cell-padding);
+            text-align: left;
+        }
+
+        td {
+            padding: var(--table-cell-padding);
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--table-alternate-row-background-color);
+        }
+
+        .error {
+            color: #dc3545;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        #lastUpdate {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>BVB Stock Data</h1>
+    <div id="lastUpdate"></div>
+    <div id="loading">Loading data...</div>
+    <div id="error" class="error" style="display:none;"></div>
+    <div class="table-container">
+        <table id="stockTable">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Price</th>
+                    <th>Change %</th>
+                    <th>Volume</th>
+                    <th>Open</th>
+                    <th>High</th>
+                    <th>Low</th>
+                    <th>Close</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const SYMBOLS = [
+            'SNP', 'TLV', 'H2O', 'SNG', 'BRD', 'DIGI', 'SNN', 'EL', 'TGN', 'M',
+            'TEL', 'ONE', 'FP', 'ATB', 'PE', 'AQ', 'TRP', 'SFG', 'TTS', 'WINE'
+        ];
+
+        const username = '!DemoAPITDV';
+        const password = 'DemoAPITDV';
+        let socket;
+
+        function connect() {
+            socket = new WebSocket('wss://api.tradeville.ro:443', ["apitv"]);
+            
+            socket.onopen = () => {
+                console.log('Connected to TradeVille API');
+                login();
+            };
+
+            socket.onmessage = handleMessage;
+            
+            socket.onerror = (error) => {
+                showError('Connection error occurred');
+            };
+
+            socket.onclose = () => {
+                console.log('Connection closed');
+            };
+        }
+
+        function login() {
+            send({
+                cmd: 'login',
+                prm: { coduser: username, parola: password, demo: true }
+            });
+        }
+
+        function send(data) {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(data));
+            }
+        }
+
+        function handleMessage(event) {
+            const response = JSON.parse(event.data);
+            
+            if (response.cmd === 'login' && response.OK) {
+                requestSymbolData();
+            } else if (response.cmd === 'Symbol') {
+                updateTableWithSymbol(response.data);
+            }
+        }
+
+        function requestSymbolData() {
+            SYMBOLS.forEach(symbol => {
+                send({ cmd: 'Symbol', prm: { symbol: symbol } });
+            });
+        }
+
+        function updateTableWithSymbol(data) {
+            const tbody = document.querySelector('#stockTable tbody');
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${data.Symbol}</td>
+                <td>${parseFloat(data.Price).toFixed(2)}</td>
+                <td>${parseFloat(data.VarPrc).toFixed(2)}%</td>
+                <td>${data.Volume}</td>
+                <td>${parseFloat(data.Open).toFixed(2)}</td>
+                <td>${parseFloat(data.High).toFixed(2)}</td>
+                <td>${parseFloat(data.Low).toFixed(2)}</td>
+                <td>${parseFloat(data.Close).toFixed(2)}</td>
+            `;
+            
+            tbody.appendChild(row);
+            document.getElementById('loading').style.display = 'none';
+            updateTimestamp();
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = 
+                `Last updated: ${now.toLocaleString()}`;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Initialize connection
+        connect();
+
+        // Refresh data every 5 minutes
+        setInterval(() => {
+            document.querySelector('#stockTable tbody').innerHTML = '';
+            document.getElementById('loading').style.display = 'block';
+            requestSymbolData();
+        }, 5 * 60 * 1000);
+    </script>
+</body>
+</html> 
