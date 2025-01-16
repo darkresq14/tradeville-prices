@@ -61,7 +61,6 @@ export default function Home() {
                 socket = new WebSocket('wss://api.tradeville.ro:443', ["apitv"]);
                 
                 socket.onopen = () => {
-                    console.log('Connected to TradeVille API');
                     login();
                 };
 
@@ -74,16 +73,13 @@ export default function Home() {
                     
                     if (reconnectAttempts < maxReconnectAttempts) {
                         reconnectAttempts++;
-                        console.log(`Attempting to reconnect (${reconnectAttempts}/${maxReconnectAttempts})...`);
                         setTimeout(connect, 2000); // Wait 2 seconds before reconnecting
                     }
                 };
 
                 socket.onclose = (event) => {
-                    console.log('WebSocket closed:', event.code, event.reason);
                     if (!event.wasClean && reconnectAttempts < maxReconnectAttempts) {
                         reconnectAttempts++;
-                        console.log(`Connection closed. Attempting to reconnect (${reconnectAttempts}/${maxReconnectAttempts})...`);
                         setTimeout(connect, 2000);
                     }
                 };
@@ -125,18 +121,14 @@ export default function Home() {
         const handleMessage = (event: MessageEvent) => {
             try {
                 const response = JSON.parse(event.data) as ApiResponse;
-                console.log('Received message:', response);
                 
                 if (response.cmd === 'login' && response.OK) {
-                    console.log('Login successful, requesting symbol data');
                     requestSymbolData();
                 } else if (response.cmd === 'Symbol' && response.data) {
-                    console.log('Received symbol data:', response.data);
                     updateStockData(response.data);
                     receivedSymbols.add(response.data.Symbol[0]);
                     
                     if (receivedSymbols.size === SYMBOLS.length) {
-                        console.log('All symbols received, closing connection');
                         socket?.close();
                     }
                 }
@@ -191,7 +183,6 @@ export default function Home() {
 
         connect();
 
-        // Cleanup
         return () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.close();
