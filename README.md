@@ -35,13 +35,18 @@ Example:
 curl http://localhost:3000/api/SNP
 ```
 
-Response:
-```json
-{
-    "price": 0.5230
-}
+Success Response:
+```
+0.5230
+```
+
+Error Response:
+```
+Symbol not found
 ```
 
 ## Available Symbols
+
+The following symbols represent all companies in the BET index (Bucharest Exchange Trading Index) as of January 16, 2025:
 
 SNP, TLV, H2O, SNG, BRD, DIGI, SNN, EL, TGN, M, TEL, ONE, FP, ATB, PE, AQ, TRP, SFG, TTS, WINE 

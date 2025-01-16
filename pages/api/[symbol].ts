@@ -11,7 +11,7 @@ interface ApiResponse {
     };
 }
 
-type Response = number | { error: string };
+type Response = number | string;
 
 export default async function handler(
     req: NextApiRequest,
@@ -20,11 +20,11 @@ export default async function handler(
     const { symbol } = req.query;
     
     if (req.method !== 'GET') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return res.status(405).json('Method not allowed');
     }
 
     if (typeof symbol !== 'string') {
-        return res.status(400).json({ error: 'Invalid symbol parameter' });
+        return res.status(400).json('Invalid symbol parameter');
     }
 
     let ws: WebSocket | null = null;
@@ -41,13 +41,13 @@ export default async function handler(
                 ws = new WebSocket('wss://api.tradeville.ro:443', ["apitv"]);
             } catch (error) {
                 console.error('Failed to create WebSocket:', error);
-                res.status(500).json({ error: 'Failed to connect to data source' });
+                res.status(500).json('Failed to connect to data source');
                 resolve();
                 return;
             }
 
             if (!ws) {
-                res.status(500).json({ error: 'Failed to create WebSocket connection' });
+                res.status(500).json('Failed to create WebSocket connection');
                 resolve();
                 return;
             }
@@ -84,7 +84,7 @@ export default async function handler(
                         const price = (response.data.Price?.[0] || response.data.LastPrice?.[0] || 0);
                         res.status(200).json(price);
                     } else {
-                        res.status(404).json({ error: 'Symbol not found' });
+                        res.status(404).json('Symbol not found');
                     }
                     cleanup();
                     resolve();
@@ -94,7 +94,7 @@ export default async function handler(
             ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
                 cleanup();
-                res.status(500).json({ error: 'Failed to connect to data source' });
+                res.status(500).json('Failed to connect to data source');
                 resolve();
             };
 
@@ -102,7 +102,7 @@ export default async function handler(
             const timeoutId = setTimeout(() => {
                 cleanup();
                 if (!res.headersSent) {
-                    res.status(504).json({ error: 'Request timeout' });
+                    res.status(504).json('Request timeout');
                 }
                 resolve();
             }, 10000);
@@ -117,7 +117,7 @@ export default async function handler(
         cleanup();
         console.error('Server error:', error);
         if (!res.headersSent) {
-            return res.status(500).json({ error: 'Internal server error' });
+            return res.status(500).json('Internal server error');
         }
     }
 } 
