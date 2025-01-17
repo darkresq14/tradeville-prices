@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { ApiResponse, ApiSymbolData, StockData } from '../types/api';
 import { SYMBOLS } from '../constants/symbols';
@@ -274,64 +275,175 @@ export default function Home() {
     };
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
+        <main className={styles.container}>
+            <Head>
+                <title>Tradeville Stock Prices - Real-time BVB Stock Market Data</title>
+                <meta name="description" content="Track real-time stock prices from Bucharest Stock Exchange (BVB). Get live updates on Romanian stock market data, including prices, variations, and market trends." />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <meta name="robots" content="index, follow" />
+                <meta name="keywords" content="BVB, Bucharest Stock Exchange, Romanian stocks, stock prices, market data, Tradeville, real-time stocks, Bursa de Valori București, acțiuni România, prețuri acțiuni, date bursiere, acțiuni BVB, indice BET, cotații bursiere, piața de capital, investiții România, bursa România, SNP, TLV, BRD, acțiuni live, prețuri live, analiza bursiera" />
+                
+                {/* OpenGraph Meta Tags */}
+                <meta property="og:title" content="Tradeville Stock Prices - Real-time BVB Stock Market Data" />
+                <meta property="og:description" content="Track real-time stock prices from Bucharest Stock Exchange (BVB). Get live updates on Romanian stock market data." />
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Tradeville Prices" />
+                
+                {/* Twitter Card Meta Tags */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="Tradeville Stock Prices - Real-time BVB Stock Market Data" />
+                <meta name="twitter:description" content="Track real-time stock prices from Bucharest Stock Exchange (BVB)" />
+                
+                <link rel="canonical" href="https://tradeville-prices.vercel.app" />
+            </Head>
+            
+            <header className={styles.header}>
                 <h1>BET Index Stock Data</h1>
-                <div className={styles.headerLinks}>
-                    <a href="https://github.com/darkresq14/tradeville-prices" target="_blank" rel="noopener noreferrer" className={styles.githubLink}>
+                <nav className={styles.headerLinks} aria-label="External links">
+                    <a href="https://github.com/darkresq14/tradeville-prices" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       className={styles.githubLink}
+                       aria-label="View source code on GitHub">
                         <img 
                             src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" 
-                            alt="GitHub" 
+                            alt="GitHub Repository" 
                             style={{ height: '40px', width: '40px', marginRight: '1rem' }}
                         />
                     </a>
-                    <a href="https://www.buymeacoffee.com/razvanbielz" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.buymeacoffee.com/razvanbielz" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       aria-label="Support the project on Buy Me A Coffee">
                         <img 
                             src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" 
-                            alt="Buy Me A Coffee" 
+                            alt="Support on Buy Me A Coffee" 
                             style={{ height: '60px', width: '217px' }}
                         />
                     </a>
-                </div>
-            </div>
-            <div className={styles.lastUpdate}>{lastUpdate && `Last updated: ${lastUpdate}`}</div>
+                </nav>
+            </header>
+
+            <section aria-label="Market Data Updates">
+                <p className={styles.lastUpdate} role="status" aria-live="polite">
+                    {lastUpdate && `Last updated: ${lastUpdate}`}
+                </p>
+                
+                {loading && (
+                    <p className={styles.loading} role="status" aria-live="polite">
+                        Loading data...
+                    </p>
+                )}
+                {error && (
+                    <p className={styles.error} role="alert">
+                        {error}
+                    </p>
+                )}
+            </section>
             
-            {loading && <div className={styles.loading}>Loading data...</div>}
-            {error && <div className={styles.error}>{error}</div>}
-            
-            <div className={styles.tableContainer}>
-                <table className={styles.stockTable}>
+            <section className={styles.tableContainer} aria-label="Stock Market Data">
+                <table className={styles.stockTable} aria-label="BET Index Stocks">
                     <thead>
                         <tr>
-                            <th onClick={() => sortData('symbol')} className={styles.sortable}>
-                                Symbol {sortConfig.key === 'symbol' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('symbol')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'symbol' ? sortConfig.direction : 'none'}
+                                >
+                                    Symbol {sortConfig.key === 'symbol' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('name')} className={styles.sortable}>
-                                Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('name')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'name' ? sortConfig.direction : 'none'}
+                                >
+                                    Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('price')} className={styles.sortable}>
-                                Price {sortConfig.key === 'price' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('price')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'price' ? sortConfig.direction : 'none'}
+                                >
+                                    Price {sortConfig.key === 'price' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('change')} className={styles.sortable}>
-                                Change % {sortConfig.key === 'change' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('change')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'change' ? sortConfig.direction : 'none'}
+                                >
+                                    Change % {sortConfig.key === 'change' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('bid')} className={styles.sortable}>
-                                Bid {sortConfig.key === 'bid' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('bid')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'bid' ? sortConfig.direction : 'none'}
+                                >
+                                    Bid {sortConfig.key === 'bid' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('ask')} className={styles.sortable}>
-                                Ask {sortConfig.key === 'ask' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('ask')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'ask' ? sortConfig.direction : 'none'}
+                                >
+                                    Ask {sortConfig.key === 'ask' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('volume')} className={styles.sortable}>
-                                Volume {sortConfig.key === 'volume' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('volume')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'volume' ? sortConfig.direction : 'none'}
+                                >
+                                    Volume {sortConfig.key === 'volume' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('dayMin')} className={styles.sortable}>
-                                Day Min {sortConfig.key === 'dayMin' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('dayMin')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'dayMin' ? sortConfig.direction : 'none'}
+                                >
+                                    Day Min {sortConfig.key === 'dayMin' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('dayMax')} className={styles.sortable}>
-                                Day Max {sortConfig.key === 'dayMax' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('dayMax')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'dayMax' ? sortConfig.direction : 'none'}
+                                >
+                                    Day Max {sortConfig.key === 'dayMax' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
-                            <th onClick={() => sortData('weight')} className={styles.sortable}>
-                                Weight % {sortConfig.key === 'weight' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                            <th scope="col" className={styles.sortable}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => sortData('weight')}
+                                    className={styles.sortButton}
+                                    aria-sort={sortConfig.key === 'weight' ? sortConfig.direction : 'none'}
+                                >
+                                    Weight % {sortConfig.key === 'weight' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                                </button>
                             </th>
                         </tr>
                     </thead>
@@ -346,6 +458,7 @@ export default function Home() {
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className={styles.symbolLink}
+                                            aria-label={`View ${symbol} API endpoint`}
                                         >
                                             {symbol}
                                         </a>
@@ -366,48 +479,59 @@ export default function Home() {
                         })}
                     </tbody>
                 </table>
-            </div>
+            </section>
 
-            <div className={styles.apiInfo}>
+            <section className={styles.apiInfo} aria-label="API Documentation">
                 <h2>API Integration</h2>
                 <p>
                     Want to integrate BET index data into your spreadsheet? Use our simple API endpoints:
                 </p>
                 
-                <h3>Stock Price Endpoint:</h3>
-                <pre className={styles.code}>
-                    GET https://tradeville-prices.vercel.app/api/[symbol]
-                </pre>
-                <p>
-                    Replace [symbol] with any stock symbol from the table above (e.g., SNP, TLV, etc.).
-                    The API returns just the price number, making it perfect for Excel or Google Sheets integration.
-                </p>
-                <h3>Example Response:</h3>
-                <pre className={styles.code}>
-                    0.5230
-                </pre>
+                <section aria-labelledby="stock-price-endpoint">
+                    <h3 id="stock-price-endpoint">Stock Price Endpoint:</h3>
+                    <pre className={styles.code}>
+                        <code>GET https://tradeville-prices.vercel.app/api/[symbol]</code>
+                    </pre>
+                    <p>
+                        Replace [symbol] with any stock symbol from the table above (e.g., SNP, TLV, etc.).
+                        The API returns just the price number, making it perfect for Excel or Google Sheets integration.
+                    </p>
+                    <h4>Example Response:</h4>
+                    <pre className={styles.code}>
+                        <code>0.5230</code>
+                    </pre>
+                </section>
 
-                <h3>BET Index Weights Endpoint:</h3>
-                <pre className={styles.code}>
-                    GET https://tradeville-prices.vercel.app/api/weights
-                </pre>
-                <p>
-                    Returns the current weights of all stocks in the BET index, one per line.
-                    Each line contains the symbol and weight (as a decimal) separated by a comma and space.
-                </p>
-                <h3>Example Response:</h3>
-                <pre className={styles.code}>{`SNP, 0.33000000
+                <section aria-labelledby="weights-endpoint">
+                    <h3 id="weights-endpoint">BET Index Weights Endpoint:</h3>
+                    <pre className={styles.code}>
+                        <code>GET https://tradeville-prices.vercel.app/api/weights</code>
+                    </pre>
+                    <p>
+                        Returns the current weights of all stocks in the BET index, one per line.
+                        Each line contains the symbol and weight (as a decimal) separated by a comma and space.
+                    </p>
+                    <h4>Example Response:</h4>
+                    <pre className={styles.code}>
+                        <code>{`SNP, 0.33000000
 TLV, 0.19800000
-BRD, 0.17200000`}</pre>
+BRD, 0.17200000`}</code>
+                    </pre>
+                </section>
 
-                <h3>Google Sheets Formulas:</h3>
-                <pre className={styles.code}>
-                    {"// For stock price:\n"}=IMPORTDATA("https://tradeville-prices.vercel.app/api/SNP"){"\n\n"}{"// For index weights:\n"}=IMPORTDATA("https://tradeville-prices.vercel.app/api/weights")
-                </pre>
-                <p className={styles.attribution}>
-                    Data provided by <a href="https://api.tradeville.ro" target="_blank" rel="noopener noreferrer">TradeVille API</a>
-                </p>
-            </div>
-        </div>
+                <section aria-labelledby="sheets-integration">
+                    <h3 id="sheets-integration">Google Sheets Formulas:</h3>
+                    <pre className={styles.code}>
+                        <code>{"// For stock price:\n"}=IMPORTDATA("https://tradeville-prices.vercel.app/api/SNP"){"\n\n"}{"// For index weights:\n"}=IMPORTDATA("https://tradeville-prices.vercel.app/api/weights")</code>
+                    </pre>
+                </section>
+
+                <footer className={styles.attribution}>
+                    <p>
+                        Data provided by <a href="https://api.tradeville.ro" target="_blank" rel="noopener noreferrer">TradeVille API</a>
+                    </p>
+                </footer>
+            </section>
+        </main>
     );
 } 

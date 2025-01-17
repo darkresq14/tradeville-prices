@@ -15,6 +15,7 @@ declare const styles: {
     attribution: string;
     symbolLink: string;
     sortable: string;
+    sortButton: string;
 };
 
 export default styles; 
